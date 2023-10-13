@@ -2,8 +2,9 @@ import asyncio
 import subprocess
 
 import torch
-from upload_result import upload_data
-from vod_download import download_video
+
+from transcribe.upload_result import upload_data
+from transcribe.vod_download import download_video
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 16

@@ -8,6 +8,7 @@ load_dotenv()
 
 
 async def upload_data(file: str | bytes, filename: str) -> None:
+    data: bytes | None = None
     if isinstance(file, str):
         with open(file, "rb") as f:
             data = f.read()

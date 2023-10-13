@@ -4,3 +4,4 @@ twitch-python==0.0.20
 yt-dlp==2023.9.24
 git+https://github.com/m-bain/whisperx.git
 aiohttp==3.8.5
+redis==5.0.1

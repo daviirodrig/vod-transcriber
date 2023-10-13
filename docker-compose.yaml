@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  rabbit:
+    image: rabbitmq:3.12-management
+    volumes:
+      - ./rabbitData:/var/lib/rabbitmq:rw
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+    env_file: .env
+    stdin_open: true
+    tty: true
+
+  redis:
+    image: redis:6.0
+    volumes:
+      - ./redisData:/data:rw
+    ports:
+      - 6379:6379
+    env_file: .env
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}

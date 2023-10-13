@@ -3,16 +3,27 @@ import os
 import threading
 
 import pika
+import redis
 from dotenv import load_dotenv
 
+from transcribe.transcribe_vod import transcribe_vod
+
 load_dotenv()
+r = redis.Redis(
+    host=os.environ["REDIS_HOST"],
+    port=6379,
+    decode_responses=True,
+    password=os.environ["REDIS_PASSWORD"],
+)
 
-
-def ack_message(ch, delivery_tag):
+def ack_message(ch, delivery_tag, vod_id):
     """Note that `ch` must be the same pika channel instance via which
     the message being ACKed was retrieved (AMQP protocol constraint).
     """
     if ch.is_open:
+        print(f"ACKing message {vod_id}")
+        r.set(f"done_processing:{vod_id}", str(True))
+        r.set(f"to_be_processed:{vod_id}", str(False))
         ch.basic_ack(delivery_tag)
     else:
         # Channel is already closed, so we can't ACK this message;
@@ -22,8 +33,8 @@ def ack_message(ch, delivery_tag):
 
 def do_work(ch, delivery_tag, body):
     vod_id = str(body.decode())
-    # do things here
-    cb = functools.partial(ack_message, ch, delivery_tag)
+    transcribe_vod(vod_id)
+    cb = functools.partial(ack_message, ch, delivery_tag, vod_id)
     ch.connection.add_callback_threadsafe(cb)
 
 
@@ -36,9 +47,9 @@ def on_message(ch, method_frame, _header_frame, body, args):
 
 
 parameters = pika.ConnectionParameters(
-    "localhost",
+    os.environ["RABBIT_HOST"],
     credentials=pika.PlainCredentials(
-        os.environ["rabbit_user"], os.environ["rabbit_password"]
+        os.environ["RABBIT_USER"], os.environ["RABBIT_PASS"]
     ),
 )
 connection = pika.BlockingConnection(parameters)
